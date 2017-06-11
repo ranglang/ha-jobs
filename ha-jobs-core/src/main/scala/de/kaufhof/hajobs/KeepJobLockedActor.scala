@@ -40,7 +40,7 @@ class KeepJobLockedActor(lockRepository: LockRepository, jobType: JobType, jobId
       }
     case Tick =>
       try {
-        log.debug("KeepJobLockedActor: updated lock for job {}", jobType.name)
+        log.debug("KeepJobLockedActor: updated lock for job {} {}", jobType.name, lockTtl)
         lockRepository.updateLock(jobType, jobId, lockTtl).map { res =>
           if (!res) {
             self ! Cancel

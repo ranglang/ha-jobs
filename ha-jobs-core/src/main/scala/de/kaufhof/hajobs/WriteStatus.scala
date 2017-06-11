@@ -15,6 +15,9 @@ trait WriteStatus {
 
   def writeStatus(jobState: JobState, content: Option[JsValue] = None)
                            (implicit jobContext: JobContext, ec: ExecutionContext): Future[JobStatus] = {
+
+//    case class JobStatus(triggerId: UUID, jobType: JobType, jobId: UUID, jobState: JobState, jobResult: JobResult, jobStatusTs: DateTime,
+//                         content: Option[JsValue] = None)
     val status = JobStatus(jobContext.triggerId, jobContext.jobType, jobContext.jobId,
       jobState, JobStatus.stateToResult(jobState), DateTime.now(), content)
     jobStatusRepository.save(status)

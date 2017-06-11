@@ -27,9 +27,11 @@ class JobUpdater(lockRepository: LockRepository,
   private val logger = getLogger(getClass)
 
   def updateJobs(): Future[List[JobStatus]] = {
+    logger.info(" time for updateJobs {}", DateTime.now())
 
     for {
-    // we *really* want sequential execution here: first read the locks,
+    // we *really* want sequential execution here:
+    // first read the locks,
     // and only after that is finished, read the jobs status (to ensure
     // consistency between job state and lock state). So please do not try to
     // optimize by moving this code out of the for comprehension.

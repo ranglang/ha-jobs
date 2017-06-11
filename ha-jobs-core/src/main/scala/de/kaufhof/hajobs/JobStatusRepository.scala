@@ -55,10 +55,10 @@ class JobStatusRepository(session: Session,
     val stmt = insertInto(MetaTable)
       .value(JobTypeColumn, jobStatus.jobType.name)
       .value(JobIdColumn, jobStatus.jobId)
+      .value(TriggerIdColumn, jobStatus.triggerId)
       .value(TimestampColumn, jobStatus.jobStatusTs.toDate)
       .value(JobStateColumn, jobStatus.jobState.toString)
       .value(JobResultColumn, jobStatus.jobResult.toString)
-      .value(TriggerIdColumn, jobStatus.triggerId)
       .using(QueryBuilder.ttl(ttl.toSeconds.toInt))
     stmt.setConsistencyLevel(LOCAL_QUORUM)
     stmt
@@ -68,11 +68,12 @@ class JobStatusRepository(session: Session,
     val stmt = insertInto(DataTable)
       .value(JobTypeColumn, jobStatus.jobType.name)
       .value(JobIdColumn, jobStatus.jobId)
+      .value(TriggerIdColumn, jobStatus.triggerId)
+
       .value(JobStateColumn, jobStatus.jobState.toString)
       .value(JobResultColumn, jobStatus.jobResult.toString)
       .value(TimestampColumn, jobStatus.jobStatusTs.toDate)
       .value(ContentColumn, jobStatus.content.map(_.toString()).orNull)
-      .value(TriggerIdColumn, jobStatus.triggerId)
       .using(QueryBuilder.ttl(ttl.toSeconds.toInt))
     stmt.setConsistencyLevel(LOCAL_QUORUM)
     stmt
@@ -127,6 +128,7 @@ class JobStatusRepository(session: Session,
 
       def selectStmt: Select = {
         val queryLimit = Option(limitByJobType(jobType)).filter(_ > 0).getOrElse(JobStatusRepository.defaultLimitByJobType(jobType))
+        logger.info("queryLimit            " + queryLimit )
         val selectMetadata = select().all().from(MetaTable).where(QueryBuilder.eq(JobTypeColumn, jobType.name)).limit(queryLimit)
         if (readwithQuorum) {
           // setConsistencyLevel returns "this", we do not need to reassign

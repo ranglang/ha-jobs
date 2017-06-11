@@ -187,6 +187,7 @@ class JobManager(managedJobs: => Jobs,
    */
   def triggerJob(jobType: JobType): Future[JobStartStatus] = {
     val triggerId = UUIDs.timeBased()
+    logger.info(s"generating triggerId $triggerId")
     logger.info(s"Triggering job of type $jobType with triggerid $triggerId")
     retriggerJob(jobType, triggerId)
   }
@@ -203,7 +204,9 @@ class JobManager(managedJobs: => Jobs,
    * @return StartStatus, f.e. Started if job could be started or LockedStatus if job is already running.
    */
   def retriggerJob(jobType: JobType, triggerId: UUID): Future[JobStartStatus] = {
-    val job = managedJobs(jobType)
+    val job = managedJobs(jobType) // shoule be map
+    logger.info("job");
+    logger.info(job.toString);
     implicit val timeout = jobStartTimeout(jobType)
     (executor ? JobExecutor.Execute(job, triggerId)).mapTo[JobStartStatus]
       .recoverWith {
@@ -213,6 +216,9 @@ class JobManager(managedJobs: => Jobs,
           if(jobType != JobTypes.JobSupervisor) {
             logger.error(s"Error starting Job {} triggerId {}, set JobStatus to Failed! ", jobType, triggerId, e)
             retry(3, s"saveJobStartFailure(${job.jobType.name}/triggerId $triggerId)") {
+
+//              case class JobStatus(triggerId: UUID, jobType: JobType, jobId: UUID, jobState: JobState, jobResult: JobResult, jobStatusTs: DateTime,
+//                                   content: Option[JsValue] = None)
               jobStatusRepo.save(
                 JobStatus(triggerId, jobType, UUIDs.timeBased(), JobState.Failed, JobResult.Failed, now, Some(Json.toJson(e.getMessage)))
               )

@@ -3,6 +3,7 @@ package de.kaufhof.hajobs
 import java.util.UUID
 
 import akka.actor._
+import org.slf4j.LoggerFactory._
 import akka.pattern.ask
 import akka.util.Timeout
 import com.datastax.driver.core.utils.UUIDs
@@ -18,6 +19,7 @@ import scala.util.{Failure, Success}
  * Executes jobs, manages currently running jobs.
  */
 class JobExecutor(lockRepo: LockRepository) extends Actor with ActorLogging {
+  private val logger = getLogger(getClass)
 
   import de.kaufhof.hajobs.JobExecutor._
 
@@ -25,6 +27,7 @@ class JobExecutor(lockRepo: LockRepository) extends Actor with ActorLogging {
 
   private def running(jobs: Map[UUID, Running]): Receive = {
     case Execute(job, triggerId) =>
+      log.info(s" Execute $job $triggerId ..................")
       val origSender = sender()
       val startStatus = run(job, triggerId, jobs)
       startStatus onComplete {
@@ -44,6 +47,7 @@ class JobExecutor(lockRepo: LockRepository) extends Actor with ActorLogging {
     case msg@Running(job, execution, lockKeeper) =>
       context.become(running(jobs + (execution.context.jobId -> msg)))
     case Completed(ctxt, maybeThrowable) =>
+      logger.info(s"complete ${ctxt.jobId}");
       jobs.get(ctxt.jobId) match {
         case Some(running) =>
           maybeThrowable match {
@@ -95,6 +99,7 @@ class JobExecutor(lockRepo: LockRepository) extends Actor with ActorLogging {
    */
   private def run(job: Job, triggerId: UUID, runningJobs: Map[UUID, Running]): Future[JobStartStatus] = {
     val jobId = UUIDs.timeBased()
+    logger.info(s" run  start run jobId: $jobId ");
 
     retry(3, s"acquireLock(${job.jobType.name}/$jobId)") {
       lockRepo.acquireLock(job.jobType, jobId, job.lockTimeout).flatMap { haveLock =>

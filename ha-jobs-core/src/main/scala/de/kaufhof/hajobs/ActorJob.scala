@@ -6,6 +6,7 @@ import scala.concurrent.{Promise, Future}
 
 import scala.concurrent.duration._
 import scala.language.postfixOps
+import org.slf4j.LoggerFactory.getLogger
 
 /**
  * A [[de.kaufhof.hajobs.Job Job]] that runs the given actor (creates a new actor instance).
@@ -22,8 +23,10 @@ class ActorJob(jobType: JobType,
                lockTimeout: FiniteDuration = 60 seconds)
   extends Job(jobType, retriggerCount, cronExpression, lockTimeout) {
 
+  private val logger = getLogger(getClass)
   override def run()(implicit ctxt: JobContext): JobExecution = new JobExecution() {
-
+    logger.warn(s"Actor job run jobId: ${ctxt.jobId} jobType ${ctxt.jobType} triggerId ${ctxt.triggerId}")
+    logger.info(s"Actor job run jobId: ${ctxt.jobId} jobType ${ctxt.jobType} triggerId ${ctxt.triggerId}")
     private val actorName = s"${jobType.name}-${ctxt.jobId}"
     private val actor = system.actorOf(props(ctxt), actorName)
     private val promise = Promise[Unit]()

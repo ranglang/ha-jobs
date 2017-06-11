@@ -1,5 +1,5 @@
 val projectVersion = "1.7.4"
-val projectScalaVersion = "2.11.8"
+val projectScalaVersion = "2.12.0"
 
 scalaVersion := projectScalaVersion
 
@@ -63,9 +63,10 @@ val publishSettings = Seq(
     </developers>
 )
 
-val playVersion = "2.5.9"
+val playVersion = "2.6.0-RC2"
+//"com.typesafe.play" %% "play-json" % "2.6.0-RC2"
 val akkaVersion = "2.4.12"
-val scalatest = "org.scalatest" %% "scalatest" % "2.2.6" % "test"
+val scalatest = "org.scalatest" %% "scalatest" % "3.0.2" % "test"
 val mockito = "org.mockito" % "mockito-core" % "1.10.19" % "test"
 val playTest = "com.typesafe.play" %% "play-test" % playVersion % "test"
 
@@ -78,6 +79,7 @@ lazy val core = project.in(file("ha-jobs-core"))
     resolvers += "Typesafe repository" at "http://repo.typesafe.com/typesafe/releases/",
     libraryDependencies ++= Seq(
       "com.datastax.cassandra" % "cassandra-driver-core" % "3.0.2",
+
       "com.typesafe.play" %% "play-json" % playVersion exclude("com.typesafe.play", "play_" + scalaVersion.value.substring(0, 4)),
       "joda-time" % "joda-time" % "2.9.2",
       "org.slf4j" % "slf4j-api" % "1.7.18",
@@ -86,9 +88,9 @@ lazy val core = project.in(file("ha-jobs-core"))
       "com.typesafe.akka" %% "akka-testkit" % akkaVersion % "test",
       playTest,
       scalatest,
-      mockito,
-      "de.kaufhof" %% "pillar" % "3.0.0" % "test"
+      mockito
     )
+//    "de.kaufhof" %% "pillar" % "3.0.0" % "test"
   )
 
 lazy val play = project.in(file("ha-jobs-play"))
