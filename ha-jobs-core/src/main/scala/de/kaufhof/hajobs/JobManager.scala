@@ -35,21 +35,25 @@ class JobManager(managedJobs: => Jobs,
                  enableJobScheduling: Boolean,
                  schedulesTimeZone: TimeZone) {
 
+  private val logger = getLogger(getClass)
+
   def this(jobs: Seq[Job], lockRepo: LockRepository, jobStatusRepo: JobStatusRepository,
            actorSystem: ActorSystem, sched: Scheduler = JobManager.createScheduler,
            enableJobScheduling: Boolean = true,
-           schedulesTimeZone: TimeZone = TimeZone.getTimeZone("UTC")) =
+           schedulesTimeZone: TimeZone = TimeZone.getTimeZone("UTC")) = {
     this(Jobs(jobs), lockRepo, jobStatusRepo, actorSystem, sched, enableJobScheduling, schedulesTimeZone)
+  }
 
-  private val logger = getLogger(getClass)
 
   private val executor = actorSystem.actorOf(JobExecutor.props(lockRepo), "JobExecutor")
 
   private val allJobsScheduledPromise = Promise[Boolean]
 
+  logger.debug("init is executed")
   init()
 
   protected def init(): Unit = {
+    logger.debug("init JobManager")
     if (enableJobScheduling) {
       ensureJobPreconditions().andThen {
         case Success(_) =>
@@ -186,6 +190,7 @@ class JobManager(managedJobs: => Jobs,
    * @return StartStatus, f.e. Started if job could be started or LockedStatus if job is already running
    */
   def triggerJob(jobType: JobType): Future[JobStartStatus] = {
+    logger.info("triggerJob");
     val triggerId = UUIDs.timeBased()
     logger.info(s"generating triggerId $triggerId")
     logger.info(s"Triggering job of type $jobType with triggerid $triggerId")
